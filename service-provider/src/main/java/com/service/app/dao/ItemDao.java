@@ -26,4 +26,9 @@ public class ItemDao {
         Query query = em.createQuery("select purchasedDate from Item where customerId="+id+" and category="+item+"");
         return query.getSingleResult();
     }
+
+    public Object getDueDateById(String key){
+        Query query = em.createQuery("select dueDate from Item where customerId="+key+"");
+        return query.getSingleResult();
+    }
 }

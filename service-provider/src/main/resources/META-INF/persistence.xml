@@ -5,9 +5,8 @@
     <persistence-unit name="RedDropsJPAunit" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
 
-        <class>com.service.app.models.BloodBank</class>
-        <class>com.service.app.models.BloodDonors</class>
-        <class>com.service.app.models.BloodBankRequest</class>
+        <class>com.service.app.models.Customer</class>
+        <class>com.service.app.models.Item</class>
 
         <exclude-unlisted-classes>false</exclude-unlisted-classes>
         <properties>

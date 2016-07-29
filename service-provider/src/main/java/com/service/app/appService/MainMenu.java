@@ -1,9 +1,8 @@
 package com.service.app.appService;
 
-import com.service.app.dao.*;
-import com.service.app.models.BloodBank;
-import com.service.app.models.BloodBankRequest;
-import com.service.app.models.BloodDonors;
+import com.service.app.dao.CustomerDao;
+import com.service.app.dao.ItemDao;
+import com.service.app.models.Customer;
 import com.service.app.util.Messages;
 import hms.kite.samples.api.SdpException;
 import hms.kite.samples.api.StatusCodes;
@@ -15,7 +14,10 @@ import hms.kite.samples.api.ussd.messages.MtUssdResp;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
@@ -38,7 +40,7 @@ public class MainMenu implements MoUssdListener {
     String init_key = "0";
     int pinCode;
     String donorName = "";
-    String bloodGroup = "";
+    String serviceDuration = "";
     String bloodType = "";
     String neededTime = "";
     String location = "";
@@ -138,23 +140,21 @@ public class MainMenu implements MoUssdListener {
             if (level == 1) {
                 init_key = key;
                 if ("1".equals(init_key)) {
-                    outputString = getBlood_Bank(key);
+                    //outputString = getCategories(key);
+                    // TODO: for shop owners
                 } else if ("2".equals(init_key)) {
-                    outputString = getBlood_Donar(key);
-                } else outputString = outputString + "Invalid Selection" + "\n999:Back" + key;
-            } else {
-
-                if ("1".equals(init_key)) {
-                    outputString = getBlood_Bank(key);
-                } else if ("2".equals(init_key)) {
-                    outputString = getBlood_Donar(key);
-                } else outputString = outputString + "Invalid Selection" + "\n999:Back" + key;
+                    //outputString = getBlood_Donar(key);
+                    // TODO: for service stations
+                } else if("3".equals(init_key)) {
+                    outputString = getCategories(key);
+                }
+                else outputString = outputString + "Invalid Selection" + "\n999:Back" + key;
             }
         }
         return outputString;
     }
 
-    private String getBlood_Bank(final String key) {
+    private String getCategories(final String key) {
         String outputString = "";
         if (level == 1) {
             outputString = outputString + "Please enter your pin code:";
@@ -162,10 +162,9 @@ public class MainMenu implements MoUssdListener {
         } else if (level == 2) {
             pinCode = Integer.parseInt(key);
 
-            BloodBankDao bbd = new BloodBankDao();
-            BloodBank bb = new BloodBank();
-            //List validBloodBank=bb.getBloodBank(pinCode);
-            List t = bbd.validPinCode(pinCode);
+            CustomerDao customerDao = new CustomerDao();
+            Customer customer = new Customer();
+            List t = customerDao.validPinCode(pinCode);
 
             if (!t.isEmpty()) {
                 outputString = outputString + "Select an item you want service: \n 1. Car \n 2. Mobile \n 2. Laptop \n 2. TV \n999:Back";
@@ -173,90 +172,67 @@ public class MainMenu implements MoUssdListener {
                 outputString = outputString + "Invalid pin code! Try again\n999:Back\n000:Exit";
             }
         } else if (level == 3) {
-            bloodGroup = getbloodgroup(key);
-            outputString = outputString + "Select your Blood Type \n 1. Positive \n 2. Negative \n999:Back\n000:Exit";
-        } else if (level == 4) {
-
-            bloodType = getbloodtype(key);
-            bloodGroup = bloodGroup + bloodType;
-
-            outputString = "Select needed time:\n 1. Urgent \n 2.Ordinary \n999:Back\n000.Exit";
-        } else if (level == 5) {
-            neededTime = getneededtime(key);
-            int my_id = 12466;
-            BloodBankRequest bdr = new BloodBankRequest(my_id, pinCode, bloodGroup, neededTime);
-            BloodBankRequestDao bd = new BloodBankRequestDao();
-            bd.insert_donor_request_detail(bdr);
-            outputString = outputString + "Your request has been successfully sent. We will inform donors as soon as possible. \n Thank you \n000.Exit";
-
+            outputString = outputString + "Where you want to get service: \n 1. Shop \n 2. Nearest service station \n999:Back";
+            if ("1".equals(init_key)) {
+                outputString = getServiceDuration(key);
+            } else if ("2".equals(init_key)) {
+                outputString = "Enter your location to get nearest service station\n" +
+                        "999:Back\n" +
+                        "000:Exit";
+            } else outputString = outputString + "Invalid Selection" + "\n999:Back" + key;
         }
-
-
         return outputString;
 
     }
 
-    private String getBlood_Donar(final String key) {
-        //String outputString="you in Donor";        
-        // return outputString;
-        //int phn=0773400432;
+    public String getServiceDuration(String key){
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String outputString = "";
-        if (level == 1) {
-            outputString = outputString + "Enter your Name:";
+        try {
+            Date dueDate = sdf.parse("2015-10-10");
+            Date currentDate = sdf.parse("2016-10-10");
+            Date lessCurrentDate = sdf.parse("2015-05-10");
+            String messageForFree = "\"You have free service until 2015-10-10 Thank you \\n\" +\n" +
+                    "                            \"999:Back\\n\" +\n" +
+                    "                            \"000:Exit\"";
+            String messageForPackage ="Your free period time is over you can use our service packages Thank you\n" +
+                    "999:Back\n" +
+                    "000:Exit";
 
-        } else if (level == 2) {
-            donorName = key;
-            outputString = outputString + "Select your area \n1.Anaikoddai\n2.Chankanai\n3.Jaffna\n4.Nallur\n5.Thirunalvelly\n000.Exit";
-        } else if (level == 3) {
-            location = getlocation(key);
-            outputString = outputString + "Select your blood group \n1.O\n2.A\n3.B\n4.AB\n000.Exit";
-        } else if (level == 4) {
-            bloodGroup = getbloodgroup(key);
-            System.out.println(bloodGroup);
-            outputString = outputString + "Select your blood group \n1.Positive\n2.Negative\n000.Exit";
-        } else if (level == 5) {
-            bloodGroup = bloodGroup + getbloodtype(key);
-            // insert to table
-            BloodDonors bdm = new BloodDonors(07730433, donorName, bloodGroup, location);
-            BloodDonorsDao bdd = new BloodDonorsDao();
-            bdd.insert_donor_detail(bdm);
-            outputString = outputString + "You are now registered on RED-DROP we will contact you soon.\nThank you\n000.Exit";
-        }
-
-        return outputString;
-    }
-
-    public String getneededtime(String key) {
-        if (Integer.parseInt(key) == 1) {
-            return "Urgent";
-        }
-        if (Integer.parseInt(key) == 2) {
-            return "Ordinary";
-        } else return "Invalid selection";
-    }
-
- /*   public String getbloodgroup(String key) {
-        if (Integer.parseInt(key) == 1) {
-            return "O";
-        }
-        if (Integer.parseInt(key) == 2) {
-            return "A";
-        }
-        if (Integer.parseInt(key) == 3) {
-            return "B";
-        }
-        if (Integer.parseInt(key) == 4) {
-            return "AB";
-        } else return "Invalid selection";
-    }*/
-
-    public String getItems(String key){
-        List<String> items = itemDao.getItemsById(key);
-        for(int i=0;i<items.size();i++){
-            if(Integer.parseInt(key) == i){
-                if(items.get(i).equals(itemDao.getDateByIdAndItem(key,)))
+            if (Integer.parseInt(key) == 1) {
+                if(dueDate.compareTo(currentDate) <= 0) {
+                   outputString = outputString + messageForFree;
+                } else {
+                   outputString = outputString + messageForPackage;
+                }
             }
+            if (Integer.parseInt(key) == 2) {
+                if(dueDate.compareTo(currentDate) <= 0) {
+                    outputString = outputString + messageForFree;
+                } else {
+                    outputString = outputString + messageForPackage;
+                }
+            }
+            if (Integer.parseInt(key) == 3) {
+                if(dueDate.compareTo(currentDate) <= 0) {
+                    outputString = outputString + messageForFree;
+                } else {
+                    outputString = outputString + messageForPackage;
+                }
+            }
+            if (Integer.parseInt(key) == 4) {
+                if(dueDate.compareTo(currentDate) <= 0) {
+                    outputString = outputString + messageForFree;
+                } else {
+                    outputString = outputString + messageForPackage;
+                }
+            } else outputString = "Invalid selection";
+
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
+        return outputString;
     }
 
     public String getbloodtype(String key) {
@@ -267,25 +243,6 @@ public class MainMenu implements MoUssdListener {
             return "-";
         } else return "Invalid selection";
     }
-
-    public String getlocation(String key) {
-        if (Integer.parseInt(key) == 1) {
-            return "Anaikoddai";
-        }
-        if (Integer.parseInt(key) == 2) {
-            return "Chankanai";
-        }
-        if (Integer.parseInt(key) == 3) {
-            return "Jaffna";
-        }
-        if (Integer.parseInt(key) == 4) {
-            return "Nallur";
-        }
-        if (Integer.parseInt(key) == 5) {
-            return "Thirunelvelly";
-        } else return "Invalid selection";
-    }
-
 
     private MtUssdResp sendRequest(final MtUssdReq request) throws SdpException {
         // sending request to service
